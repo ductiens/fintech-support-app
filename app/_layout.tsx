@@ -3,8 +3,9 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
-import { AuthProvider } from '@/src/providers/auth-provider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { FloatingChatbot } from '@/src/components/floating-chatbot';
+import { AuthProvider } from '@/src/providers/auth-provider';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -17,6 +18,7 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
         </Stack>
+        <FloatingChatbot />
         <StatusBar style="auto" />
       </ThemeProvider>
     </AuthProvider>
