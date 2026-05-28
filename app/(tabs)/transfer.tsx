@@ -1,7 +1,8 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from 'expo-router';
 
 const contacts = [
   { name: "NGUYEN VAN A", detail: "1904 8223 1220 16 - TECHCOMBANK", logo: "bank", color: "#DADADA" },
@@ -13,6 +14,7 @@ const contacts = [
 ];
 
 export default function TransferScreen() {
+  const router = useRouter();
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar style="dark" />
@@ -20,10 +22,10 @@ export default function TransferScreen() {
         <Text style={styles.title}>Bạn muốn chuyển tiền đến</Text>
 
         <View style={styles.optionRow}>
-          <View style={styles.transferOption}>
-            <Feather name="credit-card" size={31} color="#2C2C2C" />
+          <Pressable style={styles.transferOption} onPress={() => router.push('/transfer-vsmpay')}>
+            <Feather name="credit-card" size={28} color="#2C2C2C" />
             <Text style={styles.optionText}>Ví V-Smart Pay</Text>
-          </View>
+          </Pressable>
           <View style={styles.transferOption}>
             <MaterialCommunityIcons name="bank" size={30} color="#2C2C2C" />
             <Text style={styles.optionText}>Ngân hàng</Text>
