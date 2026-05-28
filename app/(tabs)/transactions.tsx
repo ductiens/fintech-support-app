@@ -1,10 +1,10 @@
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { StatusBar } from 'expo-status-bar';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type TransactionItem = {
-  type: 'transfer-out' | 'transfer-in' | 'payment';
+  type: "transfer-out" | "transfer-in" | "payment";
   label: string;
   name: string;
   date: string;
@@ -15,52 +15,52 @@ type TransactionItem = {
 
 const todayItems: TransactionItem[] = [
   {
-    type: 'transfer-out',
-    label: 'Chuyển tiền',
-    name: 'đến Trần Thị Mai Trang',
-    date: '11:15 • 10/11/2025',
-    amount: '-1.850.000 đ',
+    type: "transfer-out",
+    label: "Chuyển tiền",
+    name: "đến Trần Thị Mai Trang",
+    date: "11:15 • 10/11/2025",
+    amount: "-1.850.000 đ",
   },
   {
-    type: 'transfer-in',
-    label: 'Nhận tiền',
-    name: 'từ Trần Thị Mai Trang',
-    date: '11:15 • 10/11/2025',
-    amount: '+1.850.000 đ',
+    type: "transfer-in",
+    label: "Nhận tiền",
+    name: "từ Trần Thị Mai Trang",
+    date: "11:15 • 10/11/2025",
+    amount: "+1.850.000 đ",
     positive: true,
   },
   {
-    type: 'transfer-in',
-    label: 'Nhận tiền',
-    name: 'từ Trần Thị Mai Trang',
-    date: '11:15 • 10/11/2025',
-    amount: '+1.850.000 đ',
+    type: "transfer-in",
+    label: "Nhận tiền",
+    name: "từ Trần Thị Mai Trang",
+    date: "11:15 • 10/11/2025",
+    amount: "+1.850.000 đ",
     positive: true,
   },
   {
-    type: 'payment',
-    label: 'Thanh toán',
-    name: 'hóa đơn XanhSM',
-    date: '11:15 • 10/11/2025',
-    amount: '-150.000 đ',
+    type: "payment",
+    label: "Thanh toán",
+    name: "hóa đơn XanhSM",
+    date: "11:15 • 10/11/2025",
+    amount: "-150.000 đ",
   },
   {
-    type: 'payment',
-    label: 'Thanh toán',
-    name: 'hóa đơn Pizza',
-    date: '11:15 • 10/11/2025',
-    amount: '-150.000 đ',
+    type: "payment",
+    label: "Thanh toán",
+    name: "hóa đơn Pizza",
+    date: "11:15 • 10/11/2025",
+    amount: "-150.000 đ",
     failed: true,
   },
 ];
 
 const previousItems: TransactionItem[] = [
   {
-    type: 'transfer-out',
-    label: 'Chuyển tiền',
-    name: 'đến Trần Thị Mai Trang',
-    date: '11:15 • 09/11/2025',
-    amount: '-1.850.000 đ',
+    type: "transfer-out",
+    label: "Chuyển tiền",
+    name: "đến Trần Thị Mai Trang",
+    date: "11:15 • 09/11/2025",
+    amount: "-1.850.000 đ",
   },
 ];
 
@@ -96,9 +96,9 @@ function TransactionRow({ item }: { item: TransactionItem }) {
   return (
     <View style={styles.row}>
       <View style={styles.iconCircle}>
-        {item.type === 'transfer-out' ? (
+        {item.type === "transfer-out" ? (
           <Feather name="arrow-right" size={25} color="#050505" />
-        ) : item.type === 'transfer-in' ? (
+        ) : item.type === "transfer-in" ? (
           <Feather name="plus" size={29} color="#050505" />
         ) : (
           <MaterialCommunityIcons name="receipt-text-outline" size={25} color="#050505" />
@@ -122,98 +122,112 @@ function TransactionRow({ item }: { item: TransactionItem }) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FAFBFC",
   },
   header: {
-    paddingTop: 50,
-    paddingHorizontal: 22,
-    paddingBottom: 22,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingTop: 44,
+    paddingHorizontal: 20,
+    paddingBottom: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   title: {
-    color: '#0D0D0D',
-    fontSize: 28,
-    fontWeight: '900',
+    color: "#0B0B0B",
+    fontSize: 20,
+    fontWeight: "800",
     letterSpacing: 0.2,
   },
   scrollContent: {
-    paddingHorizontal: 22,
-    paddingBottom: 124,
+    paddingHorizontal: 20,
+    paddingBottom: 140,
   },
   sectionDate: {
-    marginTop: 8,
-    marginBottom: 24,
-    color: '#444444',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 1.1,
+    marginTop: 6,
+    marginBottom: 12,
+    color: "#7A7A7A",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1.2,
   },
   dayTitle: {
-    marginTop: 34,
-    marginBottom: 24,
-    color: '#202020',
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 1.1,
+    marginTop: 28,
+    marginBottom: 12,
+    color: "#202020",
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: 0.8,
   },
   listBlock: {
-    gap: 24,
+    gap: 12,
   },
   row: {
-    minHeight: 72,
-    flexDirection: 'row',
-    alignItems: 'center',
+    minHeight: 64,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F2F4F6",
   },
   iconCircle: {
-    width: 56,
-    height: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 28,
-    backgroundColor: '#F4F4F4',
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#ECEFF1",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
   },
   rowCenter: {
     flex: 1,
-    marginLeft: 18,
-    justifyContent: 'center',
+    marginLeft: 14,
+    justifyContent: "center",
   },
   rowLabel: {
-    color: '#8A8A8A',
-    fontSize: 14,
-    fontWeight: '600',
+    color: "#8B8B8B",
+    fontSize: 13,
+    fontWeight: "600",
   },
   rowName: {
-    marginTop: 3,
-    color: '#101010',
-    fontSize: 17,
-    fontWeight: '800',
+    marginTop: 2,
+    color: "#111111",
+    fontSize: 16,
+    fontWeight: "700",
     letterSpacing: 0.1,
   },
   rowDate: {
     marginTop: 4,
-    color: '#141414',
-    fontSize: 13,
-    fontWeight: '500',
+    color: "#9A9A9A",
+    fontSize: 12,
+    fontWeight: "500",
   },
   amountWrap: {
-    minWidth: 118,
-    alignItems: 'flex-end',
+    minWidth: 110,
+    alignItems: "flex-end",
   },
   amount: {
-    color: '#101010',
-    fontSize: 18,
-    fontWeight: '900',
+    color: "#111111",
+    fontSize: 16,
+    fontWeight: "800",
     letterSpacing: 0.1,
   },
   positiveAmount: {
-    color: '#1FA56F',
+    color: "#1FA56F",
   },
   failedText: {
-    marginTop: 5,
-    color: '#E05A4F',
-    fontSize: 14,
-    fontWeight: '700',
+    marginTop: 6,
+    color: "#E05A4F",
+    fontSize: 12,
+    fontWeight: "700",
+    backgroundColor: "rgba(224,90,79,0.06)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
 });
