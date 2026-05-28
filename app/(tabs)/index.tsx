@@ -37,7 +37,7 @@ export default function HomeScreen() {
         </SafeAreaView>
       </LinearGradient>
 
-      <View style={styles.content}>
+      <View style={styles.content} >
         <View style={styles.actionRow}>
           <View style={styles.actionItem}>
             <View style={styles.actionIcon}>
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    marginTop: -42,
+    marginTop: 10,
     paddingHorizontal: 22,
     paddingBottom: 110,
   },
