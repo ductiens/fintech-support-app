@@ -1,72 +1,111 @@
-import { router } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AppButton } from '@/src/components/app-button';
-import { Screen } from '@/src/components/screen';
-import { appConfig } from '@/src/config/app-config';
-import { useAuth } from '@/src/providers/auth-provider';
+const menuItems = ['Thông tin cá nhân', 'Bảo mật tài khoản', 'Liên kết ngân hàng', 'Hỗ trợ khách hàng'];
 
-export default function SettingsScreen() {
-  const { signOut, user } = useAuth();
-
-  const handleSignOut = async () => {
-    await signOut();
-    router.replace('/(auth)/login');
-  };
-
+export default function AccountScreen() {
   return (
-    <Screen>
-      <View style={styles.header}>
-        <Text style={styles.title}>Settings</Text>
-        <Text style={styles.description}>Common app settings and environment information.</Text>
-      </View>
+    <SafeAreaView style={styles.root}>
+      <StatusBar style="dark" />
+      <View style={styles.container}>
+        <Text style={styles.title}>Tài khoản</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Current user</Text>
-        <Text style={styles.value}>{user?.email ?? 'Not signed in'}</Text>
-      </View>
+        <View style={styles.profileCard}>
+          <View style={styles.avatar}>
+            <Feather name="user" size={34} color="#050505" />
+          </View>
+          <View style={styles.profileText}>
+            <Text style={styles.name}>NGUYEN VAN A</Text>
+            <Text style={styles.subtitle}>Tài khoản V-Smart Pay</Text>
+          </View>
+          <Feather name="chevron-right" size={24} color="#999999" />
+        </View>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>API base URL</Text>
-        <Text style={styles.value}>{appConfig.apiBaseUrl}</Text>
+        <View style={styles.menuCard}>
+          {menuItems.map((item, index) => (
+            <View style={[styles.menuRow, index !== menuItems.length - 1 && styles.menuBorder]} key={item}>
+              <Text style={styles.menuText}>{item}</Text>
+              <Feather name="chevron-right" size={22} color="#A0A0A0" />
+            </View>
+          ))}
+        </View>
       </View>
-
-      <AppButton title="Sign out" variant="secondary" onPress={handleSignOut} />
-    </Screen>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: 8,
-    marginBottom: 24,
+  root: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 22,
+    paddingTop: 52,
+    paddingBottom: 110,
   },
   title: {
-    fontSize: 30,
-    fontWeight: '800',
+    color: '#0D0D0D',
+    fontSize: 28,
+    fontWeight: '900',
   },
-  description: {
-    color: '#667085',
-    fontSize: 16,
-    lineHeight: 24,
+  profileCard: {
+    marginTop: 28,
+    height: 96,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    backgroundColor: '#F6F6F6',
   },
-  card: {
+  avatar: {
+    width: 58,
+    height: 58,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 29,
+    backgroundColor: '#FFFFFF',
+  },
+  profileText: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  name: {
+    color: '#111111',
+    fontSize: 19,
+    fontWeight: '900',
+  },
+  subtitle: {
+    marginTop: 5,
+    color: '#6F6F6F',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  menuCard: {
+    marginTop: 22,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAECF0',
-    borderRadius: 16,
-    gap: 4,
-    marginBottom: 12,
-    padding: 16,
+    borderColor: '#EFEFEF',
+    overflow: 'hidden',
   },
-  label: {
-    color: '#667085',
-    fontSize: 13,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+  menuRow: {
+    height: 62,
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  value: {
-    color: '#101828',
+  menuBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#EFEFEF',
+  },
+  menuText: {
+    color: '#161616',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });
