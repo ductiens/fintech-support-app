@@ -92,7 +92,30 @@ export default function TransactionsScreen() {
   );
 }
 
+function classifyTransaction(item: TransactionItem) {
+  const name = item.name.toLowerCase();
+  const label = item.label.toLowerCase();
+
+  if (item.type === "transfer-out" || item.type === "transfer-in" || label.includes("chuyển")) {
+    return { emoji: "💸", text: "Chuyển tiền cá nhân" };
+  }
+
+  if (label.includes("thanh toán") || label.includes("payment")) {
+    if (name.includes("pizza") || name.includes("ăn") || name.includes("quán") || name.includes("cafe") || name.includes("coffee")) {
+      return { emoji: "🍔", text: "Ăn uống" };
+    }
+    if (name.includes("hóa đơn") || name.includes("hoá đơn") || name.includes("điện") || name.includes("nước") || name.includes("internet") || name.includes("xanh")) {
+      return { emoji: "🏠", text: "Hóa đơn & Tiện ích" };
+    }
+    return { emoji: "🏠", text: "Hóa đơn & Tiện ích" };
+  }
+
+  return { emoji: "❓", text: "Chưa phân loại" };
+}
+
 function TransactionRow({ item }: { item: TransactionItem }) {
+  const category = classifyTransaction(item);
+
   return (
     <View style={styles.row}>
       <View style={styles.iconCircle}>
@@ -109,6 +132,7 @@ function TransactionRow({ item }: { item: TransactionItem }) {
         <Text style={styles.rowLabel}>{item.label}</Text>
         <Text style={styles.rowName}>{item.name}</Text>
         <Text style={styles.rowDate}>{item.date}</Text>
+        <Text style={styles.categoryText}>{category.emoji} {category.text}</Text>
       </View>
 
       <View style={styles.amountWrap}>
@@ -206,6 +230,12 @@ const styles = StyleSheet.create({
     color: "#9A9A9A",
     fontSize: 12,
     fontWeight: "500",
+  },
+  categoryText: {
+    marginTop: 4,
+    color: "#6B6B6B",
+    fontSize: 12,
+    fontWeight: "600",
   },
   amountWrap: {
     minWidth: 110,
