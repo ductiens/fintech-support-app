@@ -8,41 +8,49 @@ import { useAuth } from '@/src/providers/auth-provider';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
-  const [email, setEmail] = useState('demo@example.com');
-  const [password, setPassword] = useState('123456');
+  const [phone, setPhone] = useState('0987654321');
+  const [password, setPassword] = useState('password123');
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (!phone || !password) {
+      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ số điện thoại và mật khẩu.');
+      return;
+    }
+    setLoading(true);
     try {
-      await signIn({ email, password });
+      await signIn({ phone, password });
       router.replace('/(tabs)');
-    } catch {
-      Alert.alert('Login failed', 'Please check your email and password.');
+    } catch (error: any) {
+      Alert.alert('Đăng nhập thất bại', error.message || 'Vui lòng kiểm tra lại số điện thoại và mật khẩu.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Screen>
       <View style={styles.container}>
-        <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Base React Native app with auth, API client, and reusable UI.</Text>
+        <Text style={styles.title}>Đăng nhập</Text>
+        <Text style={styles.subtitle}>Ứng dụng V-Smart Pay kết nối ví Fintech và Trợ lý ảo AI.</Text>
 
         <View style={styles.form}>
           <TextInput
             autoCapitalize="none"
-            keyboardType="email-address"
-            placeholder="Email"
+            keyboardType="phone-pad"
+            placeholder="Số điện thoại"
             style={styles.input}
-            value={email}
-            onChangeText={setEmail}
+            value={phone}
+            onChangeText={setPhone}
           />
           <TextInput
-            placeholder="Password"
+            placeholder="Mật khẩu"
             secureTextEntry
             style={styles.input}
             value={password}
             onChangeText={setPassword}
           />
-          <AppButton title="Sign in" onPress={handleLogin} />
+          <AppButton title={loading ? "Đang xử lý..." : "Đăng nhập"} onPress={handleLogin} disabled={loading} />
         </View>
       </View>
     </Screen>

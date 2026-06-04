@@ -1,13 +1,19 @@
-import { createContext, PropsWithChildren, useContext, useMemo, useState } from 'react';
+import { createContext, PropsWithChildren, useContext, useMemo, useState, useEffect } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import { appConfig } from '@/src/config/app-config';
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
+export type User = {
+  user_id: string;
+  full_name: string;
+  phone: string;
+  email?: string | null;
+  role: string;
+  kyc_status: string;
+  created_at: string;
 };
 
 type SignInInput = {
-  email: string;
+  phone: string;
   password: string;
 };
 
@@ -15,8 +21,10 @@ type AuthContextValue = {
   user: User | null;
   accessToken: string | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   signIn: (input: SignInInput) => Promise<void>;
   signOut: () => Promise<void>;
+  updateUser: (updatedUser: User) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -24,27 +32,103 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load and validate token on mount
+  useEffect(() => {
+    async function loadStoredAuth() {
+      try {
+        const storedToken = await SecureStore.getItemAsync('accessToken');
+        const storedUserJson = await SecureStore.getItemAsync('user');
+
+        if (storedToken && storedUserJson) {
+          // Validate the token by fetching profile
+          const response = await fetch(`${appConfig.apiBaseUrl}/api/v1/finance/users/me`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${storedToken}`,
+            },
+          });
+
+          if (response.ok) {
+            const json = await response.ok ? await response.json() : null;
+            if (json && json.success && json.data) {
+              setAccessToken(storedToken);
+              setUser(json.data);
+            } else {
+              // Token invalid, clear store
+              await SecureStore.deleteItemAsync('accessToken');
+              await SecureStore.deleteItemAsync('user');
+            }
+          } else {
+            // Non-2xx response from backend (e.g. 401 Unauthorized), clear token
+            await SecureStore.deleteItemAsync('accessToken');
+            await SecureStore.deleteItemAsync('user');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load or validate stored auth:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadStoredAuth();
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       accessToken,
       isAuthenticated: Boolean(accessToken),
-      signIn: async ({ email }: SignInInput) => {
-        // TODO: Replace this mock with real API call.
-        setUser({
-          id: 'demo-user-id',
-          name: 'Demo User',
-          email,
-        });
-        setAccessToken('demo-access-token');
+      isLoading,
+      signIn: async ({ phone, password }: SignInInput) => {
+        try {
+          const response = await fetch(`${appConfig.apiBaseUrl}/api/v1/finance/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ phone, password }),
+          });
+
+          const json = await response.json();
+
+          if (!response.ok || !json.success) {
+            throw new Error(json.message || 'Số điện thoại hoặc mật khẩu không chính xác.');
+          }
+
+          const { access_token, user: apiUser } = json.data;
+
+          await SecureStore.setItemAsync('accessToken', access_token);
+          await SecureStore.setItemAsync('user', JSON.stringify(apiUser));
+
+          setAccessToken(access_token);
+          setUser(apiUser);
+        } catch (error) {
+          throw error;
+        }
       },
       signOut: async () => {
-        setUser(null);
-        setAccessToken(null);
+        try {
+          await SecureStore.deleteItemAsync('accessToken');
+          await SecureStore.deleteItemAsync('user');
+        } catch (error) {
+          console.error('Failed to clear secure store on signout:', error);
+        } finally {
+          setUser(null);
+          setAccessToken(null);
+        }
+      },
+      updateUser: (updatedUser: User) => {
+        setUser(updatedUser);
+        SecureStore.setItemAsync('user', JSON.stringify(updatedUser)).catch((err) => {
+          console.error('Failed to update persisted user:', err);
+        });
       },
     }),
-    [accessToken, user]
+    [accessToken, user, isLoading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

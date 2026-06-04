@@ -1,70 +1,106 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type TransactionItem = {
-  type: "transfer-out" | "transfer-in" | "payment";
-  label: string;
-  name: string;
-  date: string;
-  amount: string;
-  positive?: boolean;
-  failed?: boolean;
-};
+import { useUserMe, useTransactions, TransactionResponseData } from '@/src/hooks/use-finance-api';
 
-const todayItems: TransactionItem[] = [
-  {
-    type: "transfer-out",
-    label: "Chuyển tiền",
-    name: "đến Trần Thị Mai Trang",
-    date: "11:15 • 10/11/2025",
-    amount: "-1.850.000 đ",
-  },
-  {
-    type: "transfer-in",
-    label: "Nhận tiền",
-    name: "từ Trần Thị Mai Trang",
-    date: "11:15 • 10/11/2025",
-    amount: "+1.850.000 đ",
-    positive: true,
-  },
-  {
-    type: "transfer-in",
-    label: "Nhận tiền",
-    name: "từ Trần Thị Mai Trang",
-    date: "11:15 • 10/11/2025",
-    amount: "+1.850.000 đ",
-    positive: true,
-  },
-  {
-    type: "payment",
-    label: "Thanh toán",
-    name: "hóa đơn XanhSM",
-    date: "11:15 • 10/11/2025",
-    amount: "-150.000 đ",
-  },
-  {
-    type: "payment",
-    label: "Thanh toán",
-    name: "hóa đơn Pizza",
-    date: "11:15 • 10/11/2025",
-    amount: "-150.000 đ",
-    failed: true,
-  },
-];
+function formatVND(value: number) {
+  if (value === undefined || value === null) return "0 đ";
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " đ";
+}
 
-const previousItems: TransactionItem[] = [
-  {
-    type: "transfer-out",
-    label: "Chuyển tiền",
-    name: "đến Trần Thị Mai Trang",
-    date: "11:15 • 09/11/2025",
-    amount: "-1.850.000 đ",
-  },
-];
+function formatDate(dateStr: string) {
+  try {
+    const d = new Date(dateStr);
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${hours}:${minutes} • ${day}/${month}/${year}`;
+  } catch {
+    return dateStr;
+  }
+}
+
+function getFormattedGroupDate(dateStr: string) {
+  try {
+    const d = new Date(dateStr);
+    const today = new Date();
+    if (
+      d.getDate() === today.getDate() &&
+      d.getMonth() === today.getMonth() &&
+      d.getFullYear() === today.getFullYear()
+    ) {
+      return "HÔM NAY";
+    }
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch {
+    return "KHÁC";
+  }
+}
+
+function getTransactionDetails(txn: TransactionResponseData, currentUserId: string) {
+  let typeLabel = "Giao dịch";
+  let nameLabel = "";
+  let amountPrefix = "";
+  let isPositive = false;
+  let iconName: "arrow-right" | "plus" | "receipt-text-outline" = "receipt-text-outline";
+
+  if (txn.type === 'DEPOSIT') {
+    typeLabel = "Nạp tiền";
+    nameLabel = txn.description || "Nạp tiền vào ví";
+    amountPrefix = "+";
+    isPositive = true;
+    iconName = "plus";
+  } else if (txn.type === 'WITHDRAWAL') {
+    typeLabel = "Rút tiền";
+    nameLabel = txn.description || "Rút tiền khỏi ví";
+    amountPrefix = "-";
+    isPositive = false;
+    iconName = "arrow-right";
+  } else if (txn.type === 'TRANSFER') {
+    if (txn.recipient_user_id === currentUserId) {
+      typeLabel = "Nhận tiền";
+      nameLabel = txn.description || `Từ Ví V-Smart Pay`;
+      amountPrefix = "+";
+      isPositive = true;
+      iconName = "plus";
+    } else {
+      typeLabel = "Chuyển tiền";
+      nameLabel = txn.description || `Đến người nhận (${txn.recipient_user_id})`;
+      amountPrefix = "-";
+      isPositive = false;
+      iconName = "arrow-right";
+    }
+  }
+
+  return { typeLabel, nameLabel, amountPrefix, isPositive, iconName };
+}
 
 export default function TransactionsScreen() {
+  const { data: user } = useUserMe();
+  const { data: txHistory, isLoading } = useTransactions(20, 0);
+
+  const currentUserId = user?.user_id || "";
+  const transactions = txHistory?.transactions || [];
+
+  // Group transactions by date
+  const groups: { [key: string]: TransactionResponseData[] } = {};
+  transactions.forEach((txn) => {
+    const key = getFormattedGroupDate(txn.created_at);
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+    groups[key].push(txn);
+  });
+
+  const groupKeys = Object.keys(groups);
+
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar style="dark" />
@@ -73,30 +109,37 @@ export default function TransactionsScreen() {
         <Feather name="filter" size={28} color="#080808" />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionDate}>HÔM NAY</Text>
-        <View style={styles.listBlock}>
-          {todayItems.map((item, index) => (
-            <TransactionRow item={item} key={`${item.name}-${index}`} />
-          ))}
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#0B956F" style={{ marginTop: 40 }} />
+      ) : transactions.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Chưa có giao dịch nào.</Text>
         </View>
-
-        <Text style={styles.dayTitle}>09/11/2025</Text>
-        <View style={styles.listBlock}>
-          {previousItems.map((item, index) => (
-            <TransactionRow item={item} key={`${item.name}-previous-${index}`} />
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {groupKeys.map((groupDate) => (
+            <View key={groupDate}>
+              <Text style={groupDate === "HÔM NAY" ? styles.sectionDate : styles.dayTitle}>
+                {groupDate}
+              </Text>
+              <View style={styles.listBlock}>
+                {groups[groupDate].map((txn) => (
+                  <TransactionRow txn={txn} currentUserId={currentUserId} key={txn.transaction_id} />
+                ))}
+              </View>
+            </View>
           ))}
-        </View>
-      </ScrollView>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
 
-function classifyTransaction(item: TransactionItem) {
+function classifyTransaction(item: { label: string; name: string; type: string }) {
   const name = item.name.toLowerCase();
   const label = item.label.toLowerCase();
 
-  if (item.type === "transfer-out" || item.type === "transfer-in" || label.includes("chuyển")) {
+  if (item.type === "transfer-out" || item.type === "transfer-in" || label.includes("chuyển") || label.includes("nhận")) {
     return { emoji: "💸", text: "Chuyển tiền cá nhân" };
   }
 
@@ -113,15 +156,22 @@ function classifyTransaction(item: TransactionItem) {
   return { emoji: "❓", text: "Chưa phân loại" };
 }
 
-function TransactionRow({ item }: { item: TransactionItem }) {
-  const category = classifyTransaction(item);
+function TransactionRow({ txn, currentUserId }: { txn: TransactionResponseData; currentUserId: string }) {
+  const { typeLabel, nameLabel, amountPrefix, isPositive, iconName } = getTransactionDetails(txn, currentUserId);
+  const isFailed = txn.status === 'FAILED';
+
+  const category = classifyTransaction({
+    label: typeLabel,
+    name: nameLabel,
+    type: isPositive ? "transfer-in" : "transfer-out"
+  });
 
   return (
     <View style={styles.row}>
       <View style={styles.iconCircle}>
-        {item.type === "transfer-out" ? (
+        {iconName === "arrow-right" ? (
           <Feather name="arrow-right" size={25} color="#050505" />
-        ) : item.type === "transfer-in" ? (
+        ) : iconName === "plus" ? (
           <Feather name="plus" size={29} color="#050505" />
         ) : (
           <MaterialCommunityIcons name="receipt-text-outline" size={25} color="#050505" />
@@ -129,15 +179,17 @@ function TransactionRow({ item }: { item: TransactionItem }) {
       </View>
 
       <View style={styles.rowCenter}>
-        <Text style={styles.rowLabel}>{item.label}</Text>
-        <Text style={styles.rowName}>{item.name}</Text>
-        <Text style={styles.rowDate}>{item.date}</Text>
+        <Text style={styles.rowLabel}>{typeLabel}</Text>
+        <Text style={styles.rowName}>{nameLabel}</Text>
+        <Text style={styles.rowDate}>{formatDate(txn.created_at)}</Text>
         <Text style={styles.categoryText}>{category.emoji} {category.text}</Text>
       </View>
 
       <View style={styles.amountWrap}>
-        <Text style={[styles.amount, item.positive && styles.positiveAmount]}>{item.amount}</Text>
-        {item.failed ? <Text style={styles.failedText}>Thất bại</Text> : null}
+        <Text style={[styles.amount, isPositive && styles.positiveAmount]}>
+          {amountPrefix}{formatVND(txn.amount)}
+        </Text>
+        {isFailed ? <Text style={styles.failedText}>Thất bại</Text> : null}
       </View>
     </View>
   );
@@ -259,5 +311,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
+  },
+  emptyContainer: {
+    marginTop: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    color: '#9E9E9E',
+    fontSize: 15,
+    fontWeight: '500',
   },
 });

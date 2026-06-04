@@ -12,8 +12,11 @@ import {
   View,
   Modal,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import { useSendMoney } from "@/src/hooks/use-finance-api";
 
 function formatVND(value: string) {
   if (!value) return "";
@@ -31,6 +34,8 @@ export default function TransferVsmPayScreen() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [txId, setTxId] = useState("");
+
+  const { mutateAsync: sendMoney } = useSendMoney();
 
   const feePercent = 0.005; // example fee
 
@@ -51,21 +56,39 @@ export default function TransferVsmPayScreen() {
     setShowConfirm(true);
   };
 
-  const doSend = () => {
+  const doSend = async () => {
     setLoading(true);
-    // simulate API
-    setTimeout(() => {
-      const id = `VSMP-${Date.now().toString().slice(-6)}`;
-      setTxId(id);
-      setLoading(false);
-      setShowConfirm(false);
+    try {
+      const response = await sendMoney({
+        amount: amountNumber,
+        type: "TRANSFER",
+        recipient_user_id: recipient.trim(),
+        description: note.trim() || undefined,
+        idempotency_key: `idem_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      });
+
+      // Response has a "data" property with TransactionResponseData
+      if (response && response.transaction_id) {
+        setTxId(response.transaction_id);
+      } else {
+        setTxId(`TX-${Date.now().toString().slice(-6)}`);
+      }
+      
       setSuccess(true);
       // reset form
       setAmountRaw("");
       setAmountDisplay("");
       setRecipient("");
       setNote("");
-    }, 1400);
+      setShowConfirm(false);
+    } catch (error: any) {
+      Alert.alert(
+        "Chuyển tiền thất bại",
+        error.message || "Đã xảy ra lỗi trong quá trình thực hiện giao dịch."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
