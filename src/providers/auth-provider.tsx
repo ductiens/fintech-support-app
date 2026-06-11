@@ -1,6 +1,44 @@
 import { createContext, PropsWithChildren, useContext, useMemo, useState, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import { appConfig } from '@/src/config/app-config';
+
+const setStorageItemAsync = async (key: string, value: string) => {
+  if (Platform.OS === 'web') {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      console.error('Local storage is unavailable:', e);
+    }
+  } else {
+    await SecureStore.setItemAsync(key, value);
+  }
+};
+
+const getStorageItemAsync = async (key: string) => {
+  if (Platform.OS === 'web') {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      console.error('Local storage is unavailable:', e);
+      return null;
+    }
+  } else {
+    return await SecureStore.getItemAsync(key);
+  }
+};
+
+const deleteStorageItemAsync = async (key: string) => {
+  if (Platform.OS === 'web') {
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {
+      console.error('Local storage is unavailable:', e);
+    }
+  } else {
+    await SecureStore.deleteItemAsync(key);
+  }
+};
 
 export type User = {
   user_id: string;
@@ -38,12 +76,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     async function loadStoredAuth() {
       try {
-        const storedToken = await SecureStore.getItemAsync('accessToken');
-        const storedUserJson = await SecureStore.getItemAsync('user');
+        const storedToken = await getStorageItemAsync('accessToken');
+        const storedUserJson = await getStorageItemAsync('user');
 
         if (storedToken && storedUserJson) {
           // Validate the token by fetching profile
-          const response = await fetch(`${appConfig.apiBaseUrl}/api/v1/finance/users/me`, {
+          const response = await fetch(`${appConfig.apiBaseUrl}/api/v1/users/me`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -58,13 +96,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
               setUser(json.data);
             } else {
               // Token invalid, clear store
-              await SecureStore.deleteItemAsync('accessToken');
-              await SecureStore.deleteItemAsync('user');
+              await deleteStorageItemAsync('accessToken');
+              await deleteStorageItemAsync('user');
             }
           } else {
             // Non-2xx response from backend (e.g. 401 Unauthorized), clear token
-            await SecureStore.deleteItemAsync('accessToken');
-            await SecureStore.deleteItemAsync('user');
+            await deleteStorageItemAsync('accessToken');
+            await deleteStorageItemAsync('user');
           }
         }
       } catch (error) {
@@ -85,7 +123,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isLoading,
       signIn: async ({ phone, password }: SignInInput) => {
         try {
-          const response = await fetch(`${appConfig.apiBaseUrl}/api/v1/finance/login`, {
+          const response = await fetch(`${appConfig.apiBaseUrl}/api/v1/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -101,8 +139,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
           const { access_token, user: apiUser } = json.data;
 
-          await SecureStore.setItemAsync('accessToken', access_token);
-          await SecureStore.setItemAsync('user', JSON.stringify(apiUser));
+          await setStorageItemAsync('accessToken', access_token);
+          await setStorageItemAsync('user', JSON.stringify(apiUser));
 
           setAccessToken(access_token);
           setUser(apiUser);
@@ -112,8 +150,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       },
       signOut: async () => {
         try {
-          await SecureStore.deleteItemAsync('accessToken');
-          await SecureStore.deleteItemAsync('user');
+          await deleteStorageItemAsync('accessToken');
+          await deleteStorageItemAsync('user');
         } catch (error) {
           console.error('Failed to clear secure store on signout:', error);
         } finally {
@@ -123,7 +161,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       },
       updateUser: (updatedUser: User) => {
         setUser(updatedUser);
-        SecureStore.setItemAsync('user', JSON.stringify(updatedUser)).catch((err) => {
+        setStorageItemAsync('user', JSON.stringify(updatedUser)).catch((err) => {
           console.error('Failed to update persisted user:', err);
         });
       },

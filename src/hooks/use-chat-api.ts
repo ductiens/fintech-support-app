@@ -51,7 +51,8 @@ export function useChatSessions() {
   return useQuery({
     queryKey: ['chatSessions'],
     queryFn: async () => {
-      return await api.get<ChatSession[]>('/chat/sessions');
+      const response = await api.get<{ success: boolean; data: ChatSession[] }>('/chat/sessions');
+      return response.data;
     },
   });
 }
@@ -62,7 +63,8 @@ export function useChatHistory(sessionId: string | null) {
     queryKey: ['chatHistory', sessionId],
     queryFn: async () => {
       if (!sessionId) return [];
-      return await api.get<ChatMessage[]>(`/chat/sessions/${sessionId}/history`);
+      const response = await api.get<{ success: boolean; data: ChatMessage[] }>(`/chat/sessions/${sessionId}/history`);
+      return response.data;
     },
     enabled: !!sessionId,
   });
@@ -73,7 +75,8 @@ export function useSendChatMessage() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: ChatRequestPayload) => {
-      return await api.post<ChatResponseData>('/chat', payload);
+      const response = await api.post<{ success: boolean; data: ChatResponseData }>('/chat', payload);
+      return response.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['chatSessions'] });

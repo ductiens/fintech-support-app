@@ -55,7 +55,7 @@ export function useUserMe() {
   return useQuery({
     queryKey: ['userMe'],
     queryFn: async () => {
-      const response = await api.get<{ success: boolean; data: UserResponseData }>('/api/v1/finance/users/me');
+      const response = await api.get<{ success: boolean; data: UserResponseData }>('/api/v1/users/me');
       return response.data;
     },
   });
@@ -66,7 +66,7 @@ export function useWallet() {
   return useQuery({
     queryKey: ['walletMe'],
     queryFn: async () => {
-      const response = await api.get<{ success: boolean; data: WalletResponseData }>('/api/v1/finance/users/me/wallet');
+      const response = await api.get<{ success: boolean; data: WalletResponseData }>('/api/v1/users/me/wallet');
       return response.data;
     },
   });
@@ -78,7 +78,7 @@ export function useTransactions(limit: number = 20, skip: number = 0) {
     queryKey: ['transactionsMe', limit, skip],
     queryFn: async () => {
       const response = await api.get<{ success: boolean; data: TransactionListResponseData }>(
-        `/api/v1/finance/users/me/transactions?limit=${limit}&skip=${skip}`
+        `/api/v1/users/me/transactions?limit=${limit}&skip=${skip}`
       );
       return response.data;
     },
@@ -91,7 +91,7 @@ export function useSendMoney() {
   return useMutation({
     mutationFn: async (payload: SendMoneyPayload) => {
       const response = await api.post<{ success: boolean; data: TransactionResponseData }>(
-        '/api/v1/finance/transactions',
+        '/api/v1/transactions',
         payload
       );
       return response.data;
