@@ -1,9 +1,12 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useState, useEffect, useRef } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, ActivityIndicator, Alert } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, ActivityIndicator, Alert, DeviceEventEmitter } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useChatSessions, useChatHistory, useSendChatMessage, ChatMessage } from "@/src/hooks/use-chat-api";
+import { useChatSessions, useChatHistory, ChatMessage } from "@/src/hooks/use-chat-api";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/src/providers/auth-provider";
+import { appConfig } from "@/src/config/app-config";
 
 function formatDate(dateStr: string) {
   try {
@@ -98,10 +101,25 @@ export function FloatingChatbot() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const { data: sessions, refetch: refetchSessions } = useChatSessions();
   const { data: historyMessages, isLoading: historyLoading } = useChatHistory(currentSessionId);
-  const sendMessageMutation = useSendChatMessage();
-  
   const [optimisticMessages, setOptimisticMessages] = useState<ChatMessage[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingContent, setStreamingContent] = useState("");
+  
   const scrollViewRef = useRef<ScrollView>(null);
+  const queryClient = useQueryClient();
+  const { accessToken } = useAuth();
+
+  // Listen to external openChatbot event
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener("openChatbot", () => {
+      setIsOpen(true);
+      setMessage("");
+      setShowHistory(false);
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   // Sync optimistic messages with history
   useEffect(() => {
@@ -124,7 +142,7 @@ export function FloatingChatbot() {
   };
 
   const handleSend = async () => {
-    if (!message.trim() || sendMessageMutation.isPending) return;
+    if (!message.trim() || isStreaming) return;
     const userMsg = message.trim();
     setMessage("");
 
@@ -136,19 +154,110 @@ export function FloatingChatbot() {
     };
     setOptimisticMessages(prev => [...prev, userMsgObj]);
 
-    try {
-      const response = await sendMessageMutation.mutateAsync({
-        session_id: currentSessionId,
-        message: userMsg,
-      });
+    setIsStreaming(true);
+    setStreamingContent("");
 
-      if (!currentSessionId && response.session_id) {
-        setCurrentSessionId(response.session_id);
-      }
-    } catch {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${appConfig.apiBaseUrl}/chat/stream`);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        if (accessToken) {
+          xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+        }
+
+        let lastLength = 0;
+        let accumulatedAnswer = "";
+        let metadata: any = null;
+        let buffer = '';
+
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === 3 || xhr.readyState === 4) {
+            const text = xhr.responseText || "";
+            const newText = text.substring(lastLength);
+            lastLength = text.length;
+
+            buffer += newText;
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed) continue;
+              if (trimmed.startsWith('data: ')) {
+                try {
+                  const parsed = JSON.parse(trimmed.slice(6));
+                  if (parsed.type === 'token') {
+                    accumulatedAnswer += parsed.content;
+                    setStreamingContent(accumulatedAnswer);
+                  } else if (parsed.type === 'metadata') {
+                    metadata = parsed.data;
+                  }
+                } catch (e) {
+                  // Fragment line - wait for more data
+                }
+              }
+            }
+          }
+
+          if (xhr.readyState === 4) {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              // Flush remaining buffer
+              if (buffer.trim()) {
+                const trimmed = buffer.trim();
+                if (trimmed.startsWith('data: ')) {
+                  try {
+                    const parsed = JSON.parse(trimmed.slice(6));
+                    if (parsed.type === 'token') {
+                      accumulatedAnswer += parsed.content;
+                      setStreamingContent(accumulatedAnswer);
+                    } else if (parsed.type === 'metadata') {
+                      metadata = parsed.data;
+                    }
+                  } catch (e) {}
+                }
+              }
+
+              const finalSessionId = metadata?.session_id || currentSessionId;
+              if (!currentSessionId && finalSessionId) {
+                setCurrentSessionId(finalSessionId);
+              }
+
+              // Add the final assistant message
+              const assistantMsgObj: ChatMessage = {
+                role: 'assistant',
+                content: accumulatedAnswer || metadata?.answer || '',
+                timestamp: new Date().toISOString(),
+                sources: metadata?.sources || []
+              };
+              setOptimisticMessages(prev => [...prev, assistantMsgObj]);
+
+              queryClient.invalidateQueries({ queryKey: ['chatSessions'] });
+              queryClient.invalidateQueries({ queryKey: ['chatHistory', finalSessionId] });
+              resolve();
+            } else {
+              reject(new Error(`XHR failed with status ${xhr.status}`));
+            }
+          }
+        };
+
+        xhr.onerror = (e) => {
+          reject(new Error("Network error"));
+        };
+
+        xhr.send(JSON.stringify({
+          session_id: currentSessionId,
+          message: userMsg,
+        }));
+      });
+    } catch (error) {
+      console.error("Error sending message via stream:", error);
       Alert.alert("Lỗi", "Không thể gửi tin nhắn. Vui lòng thử lại.");
-      // Rollback
+      // Rollback user message
       setOptimisticMessages(prev => prev.slice(0, -1));
+    } finally {
+      setIsStreaming(false);
+      setStreamingContent("");
     }
   };
 
@@ -214,15 +323,21 @@ export function FloatingChatbot() {
                   })
                 )}
 
-                {sendMessageMutation.isPending && (
+                {isStreaming && (
                   <View style={styles.assistantAnswerContainer}>
                     <View style={styles.assistantAvatar}>
                       <Text style={styles.avatarSparkle}>✦</Text>
                     </View>
-                    <View style={styles.assistantLoadingBubble}>
-                      <ActivityIndicator size="small" color="#062C20" />
-                      <Text style={styles.loadingText}>VSmart đang suy nghĩ...</Text>
-                    </View>
+                    {streamingContent ? (
+                      <View style={styles.assistantAnswerBubble}>
+                        {renderFormattedMessage(streamingContent)}
+                      </View>
+                    ) : (
+                      <View style={styles.assistantLoadingBubble}>
+                        <ActivityIndicator size="small" color="#062C20" />
+                        <Text style={styles.loadingText}>VSmart đang suy nghĩ...</Text>
+                      </View>
+                    )}
                   </View>
                 )}
               </ScrollView>
@@ -287,7 +402,7 @@ export function FloatingChatbot() {
                   onChangeText={setMessage}
                   onSubmitEditing={handleSend}
                 />
-                <Pressable onPress={handleSend} style={styles.sendButton} disabled={sendMessageMutation.isPending}>
+                <Pressable onPress={handleSend} style={styles.sendButton} disabled={isStreaming}>
                   <Ionicons name="send" size={18} color="#FFFFFF" />
                 </Pressable>
               </View>

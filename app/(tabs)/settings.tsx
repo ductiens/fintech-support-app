@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Pressable, ActivityIndicator, Alert, Platform } from 'react-native';
+import { StyleSheet, Text, View, Pressable, ActivityIndicator, Alert, Platform, DeviceEventEmitter } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
@@ -13,6 +13,14 @@ export default function AccountScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
   const { data: user, isLoading } = useUserMe();
+
+  const handlePressItem = (item: string) => {
+    if (item === 'Hỗ trợ khách hàng') {
+      DeviceEventEmitter.emit('openChatbot');
+    } else {
+      Alert.alert('Tính năng đang phát triển', `Chức năng "${item}" sẽ sớm được ra mắt.`);
+    }
+  };
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {
@@ -74,10 +82,14 @@ export default function AccountScreen() {
 
         <View style={styles.menuCard}>
           {menuItems.map((item, index) => (
-            <View style={[styles.menuRow, index !== menuItems.length - 1 && styles.menuBorder]} key={item}>
+            <Pressable
+              onPress={() => handlePressItem(item)}
+              style={[styles.menuRow, index !== menuItems.length - 1 && styles.menuBorder]}
+              key={item}
+            >
               <Text style={styles.menuText}>{item}</Text>
               <Feather name="chevron-right" size={22} color="#A0A0A0" />
-            </View>
+            </Pressable>
           ))}
         </View>
 
