@@ -135,7 +135,21 @@ export default function TransactionsScreen() {
   );
 }
 
-function classifyTransaction(item: { label: string; name: string; type: string }) {
+function classifyTransaction(item: { label: string; name: string; type: string; backendCategory?: string }) {
+  if (item.backendCategory && item.backendCategory !== "Khác") {
+    const cat = item.backendCategory;
+    let emoji = "💡";
+    if (cat === "Ăn uống") emoji = "🍔";
+    else if (cat === "Di chuyển") emoji = "🚗";
+    else if (cat === "Hóa đơn & Tiện ích") emoji = "🏠";
+    else if (cat === "Mua sắm") emoji = "🛍️";
+    else if (cat === "Giải trí") emoji = "🎬";
+    else if (cat === "Sức khỏe") emoji = "⚕️";
+    else if (cat === "Giáo dục") emoji = "📚";
+    else if (cat === "Chuyển tiền cá nhân") emoji = "💸";
+    return { emoji, text: cat };
+  }
+
   const name = item.name.toLowerCase();
   const label = item.label.toLowerCase();
 
@@ -163,7 +177,8 @@ function TransactionRow({ txn, currentUserId }: { txn: TransactionResponseData; 
   const category = classifyTransaction({
     label: typeLabel,
     name: nameLabel,
-    type: isPositive ? "transfer-in" : "transfer-out"
+    type: isPositive ? "transfer-in" : "transfer-out",
+    backendCategory: txn.category || undefined,
   });
 
   return (

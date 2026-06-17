@@ -31,6 +31,7 @@ export type TransactionResponseData = {
   recipient_user_id?: string | null;
   recipient_wallet_id?: string | null;
   description?: string | null;
+  category?: string | null;
   idempotency_key?: string | null;
   created_at: string;
 };
