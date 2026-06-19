@@ -119,7 +119,7 @@ export default function TransferVsmPayScreen() {
           <Text style={styles.label}>Lời nhắn (tùy chọn)</Text>
           <TextInput style={styles.input} value={note} onChangeText={setNote} placeholder="Ví dụ: Thanh toán đơn hàng #123" placeholderTextColor="#B0B0B0" />
 
-          <View style={styles.previewRow}>
+          {/* <View style={styles.previewRow}>
             <View>
               <Text style={styles.previewLabel}>Phí</Text>
               <Text style={styles.previewValue}>{fee > 0 ? formatVND(String(fee)) + ' đ' : '-'} </Text>
@@ -128,7 +128,7 @@ export default function TransferVsmPayScreen() {
               <Text style={styles.previewLabel}>Tổng phí + tiền</Text>
               <Text style={styles.totalValue}>{total > 0 ? formatVND(String(total)) + ' đ' : '-'} </Text>
             </View>
-          </View>
+          </View> */}
 
           <Pressable style={[styles.sendButton, !canSend && styles.sendButtonDisabled]} onPress={openConfirm} disabled={!canSend}>
             <Text style={styles.sendButtonText}>{canSend ? 'Xác nhận' : 'Nhập thông tin'}</Text>
@@ -144,14 +144,14 @@ export default function TransferVsmPayScreen() {
                 <Text style={styles.modalLabel}>Số tiền</Text>
                 <Text style={styles.modalValue}>{formatVND(String(amountNumber))} đ</Text>
               </View>
-              <View style={styles.modalRow}>
+              {/* <View style={styles.modalRow}>
                 <Text style={styles.modalLabel}>Phí</Text>
                 <Text style={styles.modalValue}>{fee > 0 ? formatVND(String(fee)) + ' đ' : '-'}</Text>
               </View>
               <View style={styles.modalRow}>
                 <Text style={styles.modalLabel}>Tổng</Text>
                 <Text style={[styles.modalValue, { fontWeight: '900' }]}>{total > 0 ? formatVND(String(total)) + ' đ' : '-'}</Text>
-              </View>
+              </View> */}
               <View style={styles.modalRow}>
                 <Text style={styles.modalLabel}>Người nhận</Text>
                 <Text style={styles.modalValue}>{recipient}</Text>
