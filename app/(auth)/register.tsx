@@ -21,10 +21,12 @@ import { useAuth } from '@/src/providers/auth-provider';
 
 const { height } = Dimensions.get('window');
 
-export default function LoginScreen() {
-  const { signIn } = useAuth();
+export default function RegisterScreen() {
+  const { signUp } = useAuth();
+  const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -65,21 +67,31 @@ export default function LoginScreen() {
     ).start();
   }, []);
 
-  const isFormValid = phone.trim().length > 0 && password.trim().length > 0;
+  const isFormValid = 
+    fullName.trim().length > 0 && 
+    phone.trim().length >= 10 && 
+    password.length >= 6 && 
+    password === confirmPassword;
 
-  const handleLogin = async () => {
-    if (!phone || !password) {
-      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ số điện thoại và mật khẩu.');
+  const handleRegister = async () => {
+    if (!isFormValid) {
+      if (password !== confirmPassword) {
+        Alert.alert('Lỗi', 'Mật khẩu xác nhận không khớp.');
+      } else {
+        Alert.alert('Lỗi', 'Vui lòng điền đầy đủ và chính xác thông tin.');
+      }
       return;
     }
+    
     setLoading(true);
     try {
-      await signIn({ phone, password });
+      await signUp({ full_name: fullName.trim(), phone: phone.trim(), password });
+      // signUp will automatically signIn and update the auth context
       router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert(
-        'Đăng nhập thất bại',
-        error.message || 'Vui lòng kiểm tra lại số điện thoại và mật khẩu.'
+        'Đăng ký thất bại',
+        error.message || 'Có lỗi xảy ra, vui lòng thử lại sau.'
       );
     } finally {
       setLoading(false);
@@ -131,11 +143,11 @@ export default function LoginScreen() {
           {/* Top Brand Hero */}
           <View style={styles.heroSection}>
             <View style={styles.badge}>
-              <Feather name="zap" size={16} color="#00FF9D" />
-              <Text style={styles.badgeText}>V-Smart Pay</Text>
+              <Feather name="shield" size={16} color="#00FF9D" />
+              <Text style={styles.badgeText}>Thành viên mới</Text>
             </View>
-            <Text style={styles.heroTitle}>Kỷ nguyên mới{'\n'}của thanh toán.</Text>
-            <Text style={styles.heroSubtitle}>Trải nghiệm tài chính siêu tốc, an toàn và hoàn toàn miễn phí.</Text>
+            <Text style={styles.heroTitle}>Bắt đầu hành trình{'\n'}tài chính.</Text>
+            <Text style={styles.heroSubtitle}>Tạo tài khoản V-Smart Pay trong vài giây để tận hưởng tiện ích vô hạn.</Text>
           </View>
 
           {/* Plush Form Bottom Sheet */}
@@ -145,9 +157,26 @@ export default function LoginScreen() {
               { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
             ]}
           >
-            <Text style={styles.sheetTitle}>Đăng nhập</Text>
+            <Text style={styles.sheetTitle}>Đăng ký</Text>
 
             <View style={styles.formGroup}>
+              {/* Full Name Input */}
+              <View style={styles.inputCard}>
+                <View style={styles.inputPrefix}>
+                  <View style={styles.iconWrapper}>
+                    <Feather name="user" size={20} color="#718096" />
+                  </View>
+                  <View style={styles.separator} />
+                </View>
+                <TextInput
+                  placeholder="Họ và tên"
+                  placeholderTextColor="#A0AEC0"
+                  style={styles.input}
+                  value={fullName}
+                  onChangeText={setFullName}
+                />
+              </View>
+
               {/* Phone Input */}
               <View style={styles.inputCard}>
                 <View style={styles.inputPrefix}>
@@ -175,7 +204,7 @@ export default function LoginScreen() {
                   <View style={styles.separator} />
                 </View>
                 <TextInput
-                  placeholder="Nhập mật khẩu"
+                  placeholder="Nhập mật khẩu (từ 6 ký tự)"
                   placeholderTextColor="#A0AEC0"
                   secureTextEntry={!showPassword}
                   style={styles.input}
@@ -195,16 +224,33 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.forgotBtn} activeOpacity={0.6}>
-                <Text style={styles.forgotText}>Quên mật khẩu?</Text>
-              </TouchableOpacity>
+              {/* Confirm Password Input */}
+              <View style={[styles.inputCard, password && confirmPassword && password !== confirmPassword ? styles.inputCardError : null]}>
+                <View style={styles.inputPrefix}>
+                  <View style={styles.iconWrapper}>
+                    <Feather name="check-circle" size={20} color={password && confirmPassword && password !== confirmPassword ? "#E53E3E" : "#718096"} />
+                  </View>
+                  <View style={styles.separator} />
+                </View>
+                <TextInput
+                  placeholder="Xác nhận mật khẩu"
+                  placeholderTextColor="#A0AEC0"
+                  secureTextEntry={!showPassword}
+                  style={styles.input}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                />
+              </View>
+              {password.length > 0 && confirmPassword.length > 0 && password !== confirmPassword && (
+                <Text style={styles.errorText}>Mật khẩu không khớp</Text>
+              )}
 
               {/* Sweeping Gradient Button */}
               <TouchableOpacity
-                onPress={handleLogin}
+                onPress={handleRegister}
                 disabled={loading || !isFormValid}
                 activeOpacity={0.8}
-                style={styles.submitBtnContainer}
+                style={[styles.submitBtnContainer, { marginTop: 10 }]}
               >
                 <LinearGradient
                   colors={
@@ -217,7 +263,7 @@ export default function LoginScreen() {
                   style={styles.gradientBtn}
                 >
                   <Text style={[styles.btnText, (loading || !isFormValid) && styles.btnTextDisabled]}>
-                    {loading ? 'Đang xử lý...' : 'Đăng nhập'}
+                    {loading ? 'Đang xử lý...' : 'Tạo tài khoản'}
                   </Text>
                   {!loading && isFormValid && (
                     <Feather name="arrow-right" size={20} color="#FFF" style={{ marginLeft: 8 }} />
@@ -225,13 +271,14 @@ export default function LoginScreen() {
                 </LinearGradient>
               </TouchableOpacity>
 
-              {/* Redirect to Register */}
+              {/* Redirect to Login */}
               <View style={styles.footerContainer}>
-                <Text style={styles.footerText}>Chưa có tài khoản? </Text>
-                <TouchableOpacity onPress={() => router.push('/register' as any)}>
-                  <Text style={styles.footerLink}>Đăng ký ngay</Text>
+                <Text style={styles.footerText}>Đã có tài khoản? </Text>
+                <TouchableOpacity onPress={() => router.replace('/login' as any)}>
+                  <Text style={styles.footerLink}>Đăng nhập ngay</Text>
                 </TouchableOpacity>
               </View>
+
             </View>
           </Animated.View>
         </ScrollView>
@@ -274,7 +321,7 @@ const styles = StyleSheet.create({
   heroSection: {
     paddingHorizontal: 32,
     paddingTop: Platform.OS === 'ios' ? 80 : (StatusBar.currentHeight || 0) + 40,
-    paddingBottom: 40,
+    paddingBottom: 30,
   },
   badge: {
     flexDirection: 'row',
@@ -284,7 +331,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    marginBottom: 24,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: 'rgba(0, 255, 157, 0.2)',
   },
@@ -296,17 +343,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   heroTitle: {
-    fontSize: 42,
+    fontSize: 38,
     fontWeight: '900',
     color: '#FFFFFF',
-    lineHeight: 52,
+    lineHeight: 48,
     letterSpacing: -1,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   heroSubtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: 'rgba(255, 255, 255, 0.7)',
-    lineHeight: 24,
+    lineHeight: 22,
     fontWeight: '500',
     paddingRight: 40,
   },
@@ -315,7 +362,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     paddingHorizontal: 32,
-    paddingTop: 40,
+    paddingTop: 36,
     paddingBottom: Platform.OS === 'ios' ? 50 : 40,
     width: '100%',
     shadowColor: '#000',
@@ -328,21 +375,32 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '800',
     color: '#1A202C',
-    marginBottom: 32,
+    marginBottom: 24,
     letterSpacing: -0.5,
   },
   formGroup: {
-    gap: 20,
+    gap: 16,
   },
   inputCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F7FAFC',
     borderRadius: 20,
-    height: 64,
+    height: 60,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: 'transparent', // Prepare for future focus state
+    borderColor: 'transparent',
+  },
+  inputCardError: {
+    borderColor: '#FC8181',
+    backgroundColor: '#FFF5F5',
+  },
+  errorText: {
+    color: '#E53E3E',
+    fontSize: 13,
+    marginTop: -10,
+    marginLeft: 16,
+    fontWeight: '500',
   },
   inputPrefix: {
     flexDirection: 'row',
@@ -354,11 +412,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   flag: {
-    fontSize: 22,
+    fontSize: 20,
     marginRight: 6,
   },
   countryCode: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#2D3748',
   },
@@ -371,7 +429,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#1A202C',
     padding: 0,
@@ -379,16 +437,6 @@ const styles = StyleSheet.create({
   eyeBtn: {
     padding: 8,
     marginRight: -4,
-  },
-  forgotBtn: {
-    alignSelf: 'flex-end',
-    marginTop: -8,
-    marginBottom: 16,
-  },
-  forgotText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#00B27A',
   },
   submitBtnContainer: {
     borderRadius: 20,
@@ -432,4 +480,3 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
-

@@ -55,12 +55,19 @@ type SignInInput = {
   password: string;
 };
 
+type SignUpInput = {
+  full_name: string;
+  phone: string;
+  password: string;
+};
+
 type AuthContextValue = {
   user: User | null;
   accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   signIn: (input: SignInInput) => Promise<void>;
+  signUp: (input: SignUpInput) => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (updatedUser: User) => void;
 };
@@ -138,6 +145,48 @@ export function AuthProvider({ children }: PropsWithChildren) {
           }
 
           const { access_token, user: apiUser } = json.data;
+
+          await setStorageItemAsync('accessToken', access_token);
+          await setStorageItemAsync('user', JSON.stringify(apiUser));
+
+          setAccessToken(access_token);
+          setUser(apiUser);
+        } catch (error) {
+          throw error;
+        }
+      },
+      signUp: async ({ full_name, phone, password }: SignUpInput) => {
+        try {
+          const response = await fetch(`${appConfig.apiBaseUrl}/api/v1/users`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ full_name, phone, password }),
+          });
+
+          const json = await response.json();
+
+          if (!response.ok || !json.success) {
+            throw new Error(json.message || 'Đăng ký thất bại. Số điện thoại có thể đã tồn tại.');
+          }
+
+          // Automatically log in after registration
+          const loginResponse = await fetch(`${appConfig.apiBaseUrl}/api/v1/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ phone, password }),
+          });
+
+          const loginJson = await loginResponse.json();
+
+          if (!loginResponse.ok || !loginJson.success) {
+            throw new Error(loginJson.message || 'Đăng ký thành công nhưng tự động đăng nhập thất bại.');
+          }
+
+          const { access_token, user: apiUser } = loginJson.data;
 
           await setStorageItemAsync('accessToken', access_token);
           await setStorageItemAsync('user', JSON.stringify(apiUser));
