@@ -136,7 +136,7 @@ export default function TransactionsScreen() {
 }
 
 function classifyTransaction(item: { label: string; name: string; type: string; backendCategory?: string }) {
-  if (item.backendCategory && item.backendCategory !== "Khác") {
+  if (item.backendCategory) {
     const cat = item.backendCategory;
     let emoji = "💡";
     if (cat === "Ăn uống") emoji = "🍔";
@@ -147,6 +147,7 @@ function classifyTransaction(item: { label: string; name: string; type: string; 
     else if (cat === "Sức khỏe") emoji = "⚕️";
     else if (cat === "Giáo dục") emoji = "📚";
     else if (cat === "Chuyển tiền cá nhân") emoji = "💸";
+    else if (cat === "Khác") emoji = "📦";
     return { emoji, text: cat };
   }
 

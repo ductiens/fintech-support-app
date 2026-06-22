@@ -107,7 +107,7 @@ export function FloatingChatbot() {
   
   const scrollViewRef = useRef<ScrollView>(null);
   const queryClient = useQueryClient();
-  const { accessToken } = useAuth();
+  const { accessToken, isAuthenticated } = useAuth();
 
   // Listen to external openChatbot event
   useEffect(() => {
@@ -260,6 +260,10 @@ export function FloatingChatbot() {
       setStreamingContent("");
     }
   };
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <View pointerEvents="box-none" style={styles.overlay}>
