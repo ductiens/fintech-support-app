@@ -190,6 +190,9 @@ export function FloatingChatbot() {
                   if (parsed.type === 'token') {
                     accumulatedAnswer += parsed.content;
                     setStreamingContent(accumulatedAnswer);
+                  } else if (parsed.type === 'clear') {
+                    accumulatedAnswer = "";
+                    setStreamingContent("");
                   } else if (parsed.type === 'metadata') {
                     metadata = parsed.data;
                   }
@@ -211,6 +214,9 @@ export function FloatingChatbot() {
                     if (parsed.type === 'token') {
                       accumulatedAnswer += parsed.content;
                       setStreamingContent(accumulatedAnswer);
+                    } else if (parsed.type === 'clear') {
+                      accumulatedAnswer = "";
+                      setStreamingContent("");
                     } else if (parsed.type === 'metadata') {
                       metadata = parsed.data;
                     }
