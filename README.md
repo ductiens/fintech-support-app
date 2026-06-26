@@ -1,6 +1,15 @@
-# V-Smart Pay - Mobile Client & AI Support Companion App
+# VSmartPay - Mobile Client & AI Support Companion App
 
-Ứng dụng di động dành cho khách hàng trong hệ sinh thái **V-Smart Pay**, được xây dựng dựa trên Expo và React Native. Ứng dụng cung cấp các chức năng cốt lõi về quản lý ví tài chính, chuyển nhận tiền và tích hợp **Trợ thủ AI hỗ trợ trực tuyến (VSmart Chatbot)**.
+Ứng dụng di động dành cho khách hàng trong hệ sinh thái **VSmartPay**, được xây dựng dựa trên Expo và React Native. Ứng dụng cung cấp các chức năng cốt lõi về quản lý ví tài chính, chuyển nhận tiền và tích hợp **Trợ thủ AI hỗ trợ trực tuyến (VSmart Chatbot)**.
+
+---
+
+## 🌐 Hệ sinh thái dự án (Project Ecosystem)
+
+Ứng dụng di động này nằm trong hệ sinh thái giải pháp tổng thể của VSmartPay. Để có trải nghiệm và góc nhìn đầy đủ nhất về sản phẩm, bạn có thể tham khảo thêm các repository liên quan:
+
+- **[vsmartpay-ai-support-agent](https://github.com/ductiens/vsmartpay-ai-support-agent)**: Hệ thống Backend (FastAPI/Python) cung cấp API tài chính giả lập và API RAG Chatbot (điều phối bằng LangGraph) cho ứng dụng di động này.
+- **[VSmartPay-CSKH-Web-Admin-Dashboard](https://github.com/ductiens/VSmartPay-CSKH-Web-Admin-Dashboard)**: Trang Dashboard quản trị dành cho nhân viên Chăm sóc khách hàng (CSKH). Cho phép nhân viên theo dõi các đoạn hội thoại từ app và tiếp nhận các phiên chat khi cần (Human Takeover).
 
 ---
 
@@ -99,7 +108,7 @@ fintech-support-app/
 │   ├── _layout.tsx           # Root layout, tích hợp Providers (Auth, React Query)
 │   ├── index.tsx             # Redirect màn hình theo trạng thái đăng nhập
 │   ├── modal.tsx             # Modal dùng chung
-│   └── transfer-vsmpay.tsx   # Màn hình chi tiết chuyển tiền V-Smart Pay
+│   └── transfer-vsmpay.tsx   # Màn hình chi tiết chuyển tiền VSmartPay
 │
 ├── src/                      # Source code logic & components
 │   ├── components/           # UI Component dùng chung
@@ -113,9 +122,4 @@ fintech-support-app/
 │       └── auth-provider.tsx # Quản lý Access Token và trạng thái đăng nhập
 ```
 
----
 
-## 🔗 Liên Kết Hệ Thống
-Ứng dụng di động này tương tác trực tiếp với:
-- **Backend API**: Hệ thống ví điện tử Python (`mini-wallet-python`) cung cấp API tài chính và API RAG Chatbot.
-- **Admin Dashboard**: Hệ thống CSKH (`VSmartPay-CSKH-Web-Admin-Dashboard`) nơi nhân viên CSKH theo dõi các phiên chat và tiếp quản cuộc trò chuyện khi cần (Human Takeover).
